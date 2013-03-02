@@ -1,5 +1,5 @@
-require "cli-console/version"
-require "cli-console/task"
+require 'cli-console/version'
+require 'cli-console/task'
 
 
 module CLI
@@ -12,13 +12,15 @@ module CLI
             @Seperator = '-'
             @SepCount = 30
             @Backtrace = false
+            @Partial = true
             @ExitCode = -100
+            @UseReadline = true
         end
 
         def showException(exception)
-            @IO.say "Exception: #{exception.message}"
+            @IO.say "Exception: #{exception.message.strip}"
             if @Backtrace
-                @IO.say "Backtrace:"
+                @IO.say 'Backtrace:'
                 @IO.indent do |io|
                     exception.backtrace.each do |b|
                         io.say b
@@ -28,10 +30,12 @@ module CLI
         end
 
         public
+        attr_accessor :Partial
         attr_accessor :ExitCode
         attr_accessor :Seperator
         attr_accessor :SepCount
         attr_accessor :Backtrace
+        attr_accessor :UseReadline
 
         def addCommand(commandName, command, commandShortDescription='', commandLongDescription = nil, commandUsage = nil)
             commandLongDescription = command.owner.get_description(command.name) if commandLongDescription == nil
@@ -59,8 +63,8 @@ module CLI
             @LastCommand = @IO.ask(inputText) do |h|
                 h.whitespace = :strip_and_collapse
                 h.validate = nil
-                h.readline = true
-                h.completion=@Commands.keys+@Aliases.keys
+                h.readline = @UseReadline
+                h.completion = @Commands.keys+@Aliases.keys
             end
             @LastCommand = '' if (not @LastCommand.to_s.empty? and @LastCommand[0] == '#')
             return @LastCommand
@@ -68,8 +72,9 @@ module CLI
 
         def commandMatch(command)
             matches = []
-            @Commands.each do |key, value|
-                matches.push([key, value]) if key.start_with?(command)
+            commandStrings = @Commands.merge(@Aliases)
+            commandStrings.each do |key, value|
+                matches.push([key, value]) if (@Partial and key.start_with?(command)) or key == command
             end
             matches
         end
@@ -77,7 +82,9 @@ module CLI
         def showMatches(matches)
             @IO.say('Matches:')
             matches.each do |value|
-                @IO.indent(1, value[0].to_s + ' - '+value[1][1].to_s)
+                text = value[0].to_s
+                text += ' - '+value[1][1].to_s unless value[1][1].to_s.empty?
+                @IO.indent(1, text )
             end
         end
 
@@ -89,12 +96,19 @@ module CLI
                 commandWords << m[1] unless m[1].nil?
                 commandWords << m[2] unless m[2].nil?
             end
-            command = commandWords.shift.downcase()
+            command = commandWords.shift.downcase
 
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
                 if matches.length == 1
-                command = matches[0][0]
+                    if matches[0][1][0].class == String
+                    oldCommandWords = [matches[0][1][0]]
+                    commandWords = @Aliases[matches[0][0]][0].split
+                    command = commandWords.shift.downcase
+                    commandWords += oldCommandWords
+                    else
+                    command = matches[0][0]
+                    end
                 elsif matches.length > 0
                     @IO.say('Ambiguous command.')
                     showMatches(matches)
