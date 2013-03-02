@@ -28,7 +28,7 @@ Because `CLI::Console` will accept any IO class with implements those few functi
 
 ## Usage Example
 
-Take a look at [/examples/shell.rb](/davispuh/examples/shell.rb)
+Take a look at [examples/shell.rb](examples/shell.rb)
 
 
 ## Documentation
