@@ -19,31 +19,26 @@ Simply
 
 ### Dependecies
 
-There's are no dependencies.
-Well actually there's not direct dependencies.
+This library doesn't have any dependencies.
+Well actually there's no direct dependencies.
 But in reality need HighLine and Readline.
 Then why I said there's no dependencies?
 Because `CLI::Console` will accept any IO class with implements those few functions which currently are provided by HighLine.
 
 
-## Usage
+## Usage Example
 
-TODO: Write usage instructions here
-
-
-## Example
-
-TODO: will write one day...
+Take a look at [/examples/shell.rb](/davispuh/examples/shell.rb)
 
 
 ## Documentation
 
-TODO: will be one day, most likly with YARD
+YARD with markdown is used for documentation (`redcarpet` required)
 
+## Specs
 
-## Tests
-
-TODO: RSpec will do it :D
+RSpec and simplecov are required, to run tests just `rake spec`
+code coverage will also be generated
 
 ## Authors
 
