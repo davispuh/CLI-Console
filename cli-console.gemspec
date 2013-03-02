@@ -12,6 +12,7 @@ Gem::Specification.new do |gem|
     gem.description   = 'Basic library for making interactive command-line applications much easier'
     gem.summary       = 'Create CLI applications easily'
     gem.homepage      = 'https://github.com/davispuh/CLI-Console'
+    gem.license       = 'UNLICENSE'
 
     gem.files         = `git ls-files`.split($/)
     gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
