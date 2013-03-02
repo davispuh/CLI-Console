@@ -57,7 +57,7 @@ module CLI
         def addCommand(commandName, command, commandDescription='', commandLongDescription = nil, commandUsage = nil)
             commandLongDescription = command.owner.get_description(command.name) if commandLongDescription == nil
             commandUsage = command.owner.get_usage(command.name) if commandUsage == nil
-            @Commands[commandName] = [command, commandShortDescription, commandLongDescription, commandUsage]
+            @Commands[commandName] = [command, commandDescription, commandLongDescription, commandUsage]
         end
 
         # Adds name for exit command
@@ -92,7 +92,7 @@ module CLI
         # @param commandUsage [String] usage information about alias
         # @return [Array] alias information
         def addAlias(aliasName, commandNameParms, commandDescription=nil, commandLongDescription = nil, commandUsage = nil)
-            @Aliases[aliasName] = [commandNameParms, commandShortDescription, commandLongDescription, commandUsage]
+            @Aliases[aliasName] = [commandNameParms, commandDescription, commandLongDescription, commandUsage]
         end
 
         # Waits till user enters command
