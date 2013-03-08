@@ -16,7 +16,7 @@ module CLI
     #   end
     # ```
     module Task
-        private
+        protected
         @@__usage__ = {}
         @@__desc__ = {}
 

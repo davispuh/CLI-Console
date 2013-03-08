@@ -11,7 +11,6 @@ module CLI
     #   console = CLI::Console.new(io)
     # ```
     class Console
-        private
         def initialize(io)
             @Commands = {}
             @Aliases = {}
@@ -24,9 +23,11 @@ module CLI
             @UseReadline = true
         end
 
+        protected
+
         # Outputs nicely formated exception
         # displays backtrace if @Backtrace
-        # @param [Exception] exception to display
+        # @param exception [Exception] exception to display
         def showException(exception)
             @IO.say "Exception: #{exception.message.strip}"
             if @Backtrace
