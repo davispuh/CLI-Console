@@ -55,7 +55,7 @@ module CLI
         # @param commandLongDescription [String] long description about command
         # @param commandUsage [String] usage information about command
         # @return [Array] command information
-        def addCommand(commandName, command, commandDescription='', commandLongDescription = nil, commandUsage = nil)
+        def addCommand(commandName, command, commandDescription = '', commandLongDescription = nil, commandUsage = nil)
             commandLongDescription = command.owner.get_description(command.name) if commandLongDescription == nil
             commandUsage = command.owner.get_usage(command.name) if commandUsage == nil
             @Commands[commandName] = [command, commandDescription, commandLongDescription, commandUsage]
@@ -67,7 +67,7 @@ module CLI
         # @param commandLongDescription [String] long description about command
         # @param commandUsage [String] usage information about command
         # @return [Array] command information
-        def addExitCommand(commandName, commandDescription='', commandLongDescription = nil, commandUsage = nil)
+        def addExitCommand(commandName, commandDescription = '', commandLongDescription = nil, commandUsage = nil)
             commandLongDescription = 'Exit...' unless commandLongDescription
             commandUsage = ['exit'] unless commandUsage
             @Commands[commandName] = [method(:end), commandDescription, commandLongDescription, commandUsage]
@@ -79,7 +79,7 @@ module CLI
         # @param commandLongDescription [String] long description about command
         # @param commandUsage [String] usage information about command
         # @return [Array] command information
-        def addHelpCommand(commandName, commandDescription='', commandLongDescription = nil, commandUsage = nil)
+        def addHelpCommand(commandName, commandDescription = '', commandLongDescription = nil, commandUsage = nil)
             commandLongDescription = 'Display Help for <command>' unless commandLongDescription
             commandUsage = ['help <command>'] unless commandUsage
             @Commands[commandName] = [method(:help), commandDescription, commandLongDescription, commandUsage]
@@ -92,7 +92,7 @@ module CLI
         # @param commandLongDescription [String] long description about alias
         # @param commandUsage [String] usage information about alias
         # @return [Array] alias information
-        def addAlias(aliasName, commandNameParms, commandDescription=nil, commandLongDescription = nil, commandUsage = nil)
+        def addAlias(aliasName, commandNameParms, commandDescription = nil, commandLongDescription = nil, commandUsage = nil)
             @Aliases[aliasName] = [commandNameParms, commandDescription, commandLongDescription, commandUsage]
         end
 
@@ -104,7 +104,7 @@ module CLI
                 h.whitespace = :strip_and_collapse
                 h.validate = nil
                 h.readline = @UseReadline
-                h.completion = @Commands.keys+@Aliases.keys
+                h.completion = @Commands.keys + @Aliases.keys
             end
             @LastCommand = '' if (not @LastCommand.to_s.empty? and @LastCommand[0] == '#')
             return @LastCommand
@@ -128,8 +128,22 @@ module CLI
             matches.each do |value|
                 text = value[0].to_s
                 text += ' - '+value[1][1].to_s unless value[1][1].to_s.empty?
-                @IO.indent(1, text )
+                @IO.indent(1, text)
             end
+        end
+
+        # Parses commandString into Array of words
+        # @param commandString [String]
+        # @return [Array] command words
+        def parseCommandString(commandString)
+            commandWords = []
+            return commandWords unless commandString
+            commandString.scan(/([^\s"']+)|"([^"]*)"|'([^']*)'/) do |m|
+                commandWords << m[0] unless m[0].nil?
+                commandWords << m[1] unless m[1].nil?
+                commandWords << m[2] unless m[2].nil?
+            end
+            commandWords
         end
 
         # Executes command with parameters
@@ -137,14 +151,8 @@ module CLI
         # @return command result or error number
         def processCommand(commandString)
             return 0 if commandString.to_s.empty?
-            commandWords = []
-            commandString.scan(/([^\s"']+)|"([^"]*)"|'([^']*)'/) do |m|
-                commandWords << m[0] unless m[0].nil?
-                commandWords << m[1] unless m[1].nil?
-                commandWords << m[2] unless m[2].nil?
-            end
+            commandWords = parseCommandString(commandString)
             command = commandWords.shift.downcase
-
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
                 if matches.length == 1
@@ -195,13 +203,13 @@ module CLI
                         end
                     end
                     command = getCommand( formatString % currentValues )
-                    @IO.indent_level+=1
+                    @IO.indent_level += 1
                     result = processCommand(command)
-                    @IO.indent_level-=1
+                    @IO.indent_level -= 1
                     return 0 if result == @ExitCode
                 rescue Exception => e
                     showException(e)
-                @IO.indent_level=indent_level
+                @IO.indent_level = indent_level
                 end
             end
             -1
@@ -209,7 +217,7 @@ module CLI
 
         # Displays seperator line
         def printSeperator
-            @IO.say(@Seperator*@SepCount)
+            @IO.say(@Seperator * @SepCount)
         end
 
         # Displays help about command
@@ -219,7 +227,7 @@ module CLI
                 printSeperator
                 if not @Commands[command][3].to_a.empty?
                     @IO.indent do |io|
-                        @Commands[command][3].each { |c| io.say c}
+                        @Commands[command][3].each { |c| io.say c }
                         io.newline
                     end
                 end
@@ -235,13 +243,13 @@ module CLI
 
         # Shows message to inform how to get more information about command
         # @param helpCommand [String] command for which display message
-        def command_usage(helpCommand='help')
+        def command_usage(helpCommand = 'help')
             @IO.say("You can type \"#{helpCommand} <command>\" for more info")
         end
 
         # Shows help information about command
         # @param params [Array] command for which show help
-        def help(params=[])
+        def help(params = [])
             if not params.to_a.empty?
                 command = params[0].downcase
                 if (not @Commands.key?(command) and not @Aliases.key?(command))
@@ -295,7 +303,7 @@ module CLI
 
         # @param params [Array] unused
         # @return [Fixnum]
-        def end(params=[])
+        def end(params = [])
             @ExitCode
         end
     end
