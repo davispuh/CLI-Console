@@ -30,6 +30,39 @@ describe CLI::Console do
         console.addAlias('quit','exit')
     end
 
+    describe '.parseCommandString' do
+        it 'should parse correctly simple command' do
+            CLI::Console::parseCommandString('command param1 param2').should eq(['command', 'param1', 'param2'])
+        end
+
+        it 'should parse command with double quotes' do
+            CLI::Console::parseCommandString('command "param1 extra" param2').should eq(['command', 'param1 extra', 'param2'])
+            CLI::Console::parseCommandString('command "param1" "param2 extra"').should eq(['command', 'param1', 'param2 extra'])
+        end
+
+        it 'should parse command with single quotes' do
+            CLI::Console::parseCommandString('command \'param1 extra\' param2').should eq(['command', 'param1 extra', 'param2'])
+            CLI::Console::parseCommandString('command \'param1\' \'param2 extra\'').should eq(['command', 'param1', 'param2 extra'])
+        end
+
+        it 'should parse command with mixed quotes' do
+            CLI::Console::parseCommandString('command "param1 \'extra double\'" param2').should eq(['command', 'param1 \'extra double\'', 'param2'])
+            CLI::Console::parseCommandString('command "param1" "param2 \'double extra\'"').should eq(['command', 'param1', 'param2 \'double extra\''])
+            CLI::Console::parseCommandString('command \'param1 "extra double"\' param2').should eq(['command', 'param1 "extra double"', 'param2'])
+            CLI::Console::parseCommandString('command \'param1\' \'param2 "double extra"\'').should eq(['command', 'param1', 'param2 "double extra"'])
+        end
+
+        it 'should parse command with escaped quotes' do
+            CLI::Console::parseCommandString('command "param with \" quote"').should eq(['command', 'param with " quote'])
+            CLI::Console::parseCommandString('command \'param with \\\' quote\'').should eq(['command', 'param with \' quote'])
+        end
+
+        it 'should parse command with escaped quotes in quotes' do
+            CLI::Console::parseCommandString('command "param1 \'extra \"double double\"\'" param2').should eq(['command', 'param1 \'extra "double double"\'', 'param2'])
+        end
+
+    end
+
     describe '#initialize' do
         it 'should return cli-console instance' do
             console.should be_kind_of(CLI::Console)
@@ -72,17 +105,40 @@ describe CLI::Console do
     end
 
     describe '#processCommand' do
-        it 'should execute succesfully' do
+        before do
             init
-            console.processCommand('tr')
-            console.processCommand('try more')
-            console.processCommand('q')
-            console.processCommand('quit')
-            console.processCommand('help')
-            console.processCommand('help tr')
-            console.processCommand('help try')
-            console.processCommand('help not')
-            console.processCommand('help e')
+        end
+
+        it 'should return zero' do
+            console.processCommand('').should eq(0)
+        end
+
+        it 'should be ambiguous command' do
+            console.processCommand('tr').should eq(-3)
+        end
+
+        it 'should throw exception' do
+            console.processCommand('try more').should eq(-1)
+        end
+
+        it 'should quit' do
+            console.processCommand('q').should eq(console.ExitCode)
+            console.processCommand('quit').should eq(console.ExitCode)
+        end
+
+        it 'should show help' do
+            console.processCommand('help').should be_nil
+            console.processCommand('help try').should be_nil
+            console.processCommand('help e').should be_nil
+        end
+
+        it 'should show help for method and alias' do
+            console.processCommand('help tr').should be_kind_of(Array)
+        end
+
+        it 'should execute succesfully' do
+            console.processCommand('help not').should be_nil
+
         end
     end
 

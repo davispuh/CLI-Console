@@ -135,13 +135,21 @@ module CLI
         # Parses commandString into Array of words
         # @param commandString [String]
         # @return [Array] command words
-        def parseCommandString(commandString)
+        def self.parseCommandString(commandString)
             commandWords = []
             return commandWords unless commandString
-            commandString.scan(/([^\s"']+)|"([^"]*)"|'([^']*)'/) do |m|
+
+            pattern = %r{
+                (?<command> [^\s"']+ ){0}
+                (?<exceptDoubleQuotes> [^"\\]*(?:\\.[^"\\]*)* ){0}
+                (?<exceptSingleQuotes> [^'\\]*(?:\\.[^'\\]*)* ){0}
+                \g<command>|"\g<exceptDoubleQuotes>"|'\g<exceptSingleQuotes>'
+            }x
+
+            commandString.scan(pattern) do |m|
                 commandWords << m[0] unless m[0].nil?
-                commandWords << m[1] unless m[1].nil?
-                commandWords << m[2] unless m[2].nil?
+                commandWords << m[1].gsub('\"','"') unless m[1].nil?
+                commandWords << m[2].gsub('\\\'','\'') unless m[2].nil?
             end
             commandWords
         end
@@ -151,7 +159,7 @@ module CLI
         # @return command result or error number
         def processCommand(commandString)
             return 0 if commandString.to_s.empty?
-            commandWords = parseCommandString(commandString)
+            commandWords = Console::parseCommandString(commandString)
             command = commandWords.shift.downcase
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
