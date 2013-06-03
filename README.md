@@ -21,10 +21,10 @@ Simply
 
 This library doesn't have any dependencies.
 Well actually there's no direct dependencies.
-But in reality need HighLine and Readline.
+But in reality you do need HighLine.
 Then why I said there's no dependencies?
 Because `CLI::Console` will accept any IO class with implements those few functions which currently are provided by HighLine.
-
+Also, this program requires ruby version 1.9.x
 
 ## Usage Example
 
