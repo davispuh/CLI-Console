@@ -1,10 +1,9 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
 group :development, :test do
-    gem 'highline', '>= 1.6.16'
-    gem 'rspec'
-    gem 'simplecov'
-    gem 'yard'
-    gem 'redcarpet'
+    gem 'redcarpet',  :platforms => [:ruby, :mswin, :mingw]
+    gem 'kramdown',   :platforms => :jruby
 end
 
+# Specify your gem's dependencies in SteamCodec.gemspec
+gemspec
