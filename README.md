@@ -34,12 +34,19 @@ Take a look at [examples/shell.rb](examples/shell.rb)
 
 ## Documentation
 
-YARD with markdown is used for documentation (`redcarpet` required)
+YARD with markdown is used for documentation
 
 ## Specs
 
 RSpec and simplecov are required, to run tests just `rake spec`
 code coverage will also be generated
+
+## Code status
+
+[![Build Status](https://travis-ci.org/davispuh/CLI-Console.png?branch=master)](https://travis-ci.org/davispuh/CLI-Console)
+[![Dependency Status](https://gemnasium.com/davispuh/CLI-Console.png)](https://gemnasium.com/davispuh/CLI-Console)
+[![Coverage Status](https://coveralls.io/repos/davispuh/CLI-Console/badge.png)](https://coveralls.io/r/davispuh/CLI-Console)
+
 
 ## Authors
 
