@@ -1,5 +1,5 @@
 # CLI::Console
-
+[![Gem Version](https://badge.fury.io/rb/cli-console.png)](http://badge.fury.io/rb/cli-console)
 
 Basic library for making interactive command-line applications much easier.
 
