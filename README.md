@@ -20,17 +20,16 @@ Simply
 ### Dependecies
 
 This library doesn't have any dependencies.
-Well actually there's no direct dependencies.
-But in reality you do need [HighLine](http://rubygems.org/gems/highline).
-Then why I said there's no dependencies?
-Because `CLI::Console` will accept any class with implements those few functions which currently are provided by HighLine.
+Well actually there are no direct dependencies.
+In reality you do need [HighLine](http://rubygems.org/gems/highline).
+Then why did I say there's no dependencies?
+Because `CLI::Console` will accept any class implementing those few functions currently provided by HighLine.
 
 Also, this library requires Ruby version 1.9.x or newer (works fine with 2.0)
 
 ## Usage Example
 
 Take a look at [examples/shell.rb](examples/shell.rb)
-
 
 ## Documentation
 
