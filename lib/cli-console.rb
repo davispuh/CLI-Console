@@ -188,6 +188,8 @@ module CLI
             end
             begin
                 return @Commands[command][0].call(commandWords)
+            rescue Interrupt, EOFError => e
+                raise
             rescue Exception => e
                 showException(e)
             end
@@ -215,6 +217,8 @@ module CLI
                     result = processCommand(command)
                     @IO.indent_level -= 1
                     return 0 if result == @ExitCode
+                rescue Interrupt, EOFError => e
+                    raise
                 rescue Exception => e
                     showException(e)
                 @IO.indent_level = indent_level
