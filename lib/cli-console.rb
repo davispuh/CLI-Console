@@ -29,7 +29,7 @@ module CLI
         # displays backtrace if @Backtrace
         # @param exception [Exception] exception to display
         def showException(exception)
-            @IO.say "Exception: #{exception.message.strip}"
+            @IO.say "#{exception.class}: #{exception.message.strip}"
             if @Backtrace
                 @IO.say 'Backtrace:'
                 @IO.indent do |io|
