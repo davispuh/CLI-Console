@@ -10,7 +10,7 @@ class UI
     usage 'Usage: try'
     desc 'try exception'
     def try(params)
-        raise Exception, params[0]
+        raise CLI::CommandNotFoundError, params[0]
     end
 end
 
@@ -152,7 +152,7 @@ describe CLI::Console do
             input.rewind
             init
             console.start('%s> ',[method(:left)]).should eq(0)
-            out = 'left>    Exception: lol
+            out = 'left>    CLI::CommandNotFoundError: lol
 left>    Command "not" not recognized.
 left> '
 
