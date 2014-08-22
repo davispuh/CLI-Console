@@ -69,7 +69,7 @@ module CLI
         # @param commandName [String] name of command
         # @return nil
         def addDefaultCommand(commandName)
-            command = Console.parseCommandString(commandName).shift.downcase
+            command = commandName.downcase
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
                 if matches.length == 1
@@ -154,13 +154,51 @@ module CLI
             end
         end
 
-        # Parses commandString into Array of words
-        # @param commandString [String]
-        # @return [Array] command words
         def self.parseCommandString(commandString)
-            commandWords = []
-            return commandWords unless commandString
+            idx = 0;
+            tokens = []
+            currentToken = []
+            escapeNext = false
+            inString = nil
+            stringQuote = nil
+            while idx < commandString.length
+                currentChar = commandString[idx]
+                if escapeNext
+                    escapeNext = false
+                    currentToken << commandString[idx]
+                    idx += 1
+                    next
+                end
+                if (currentChar == '"' or currentChar == "\'") and not escapeNext
+                    stringQuote = currentChar == '"' ? '"' : "'" unless inString
+                    inString = (not inString) if currentChar == stringQuote or (not inString)
+                end
+                if currentChar == "\\"
+                    escapeNext = true
+                    idx += 1
+                    next
+                end
+                if currentChar == ' ' and not inString
+                    tokens << currentToken.join("")
+                    currentToken = []
+                    idx += 1
+                    next
+                end
+                currentToken << currentChar
+                idx += 1
+            end
+            # Catch any stragglers.
+            unless currentToken.empty?
+                tokens << currentToken.join("")
+                currentToken = []
+            end
+            tokens
+        end
 
+        # Parses all the escape sequences in token
+        # @param token [String]
+        # @return [String] escapedToken
+        def self.replaceEscapes(token)
             pattern = %r{
                 (?<command> [^\s"']+ ){0}
                 (?<exceptDoubleQuotes> [^"\\]*(?:\\.[^"\\]*)* ){0}
@@ -168,20 +206,23 @@ module CLI
                 \g<command>|"\g<exceptDoubleQuotes>"|'\g<exceptSingleQuotes>'
             }x
 
-            commandString.scan(pattern) do |m|
-                commandWords << m[0] unless m[0].nil?
-                commandWords << m[1].gsub('\"','"') unless m[1].nil?
-                commandWords << m[2].gsub('\\\'','\'') unless m[2].nil?
+            token.scan(pattern) do |m|
+                return m[0] unless m[0].nil?
+                return m[1].gsub('\"','"') unless m[1].nil?
+                return m[2].gsub('\\\'','\'') unless m[2].nil?
             end
-            commandWords
         end
+
+        # def self.parseCommandString(commandString)
+        #     return commandString.split(" ").map { |e| replaceEscapes(e) }
+        # end
 
         # Executes command with parameters
         # @param commandString [String]
         # @return command result or error number
         def processCommand(commandString)
             return 0 if commandString.to_s.empty?
-            commandWords = Console::parseCommandString(commandString)
+            commandWords = Console::parseCommandString(commandString) unless commandString.nil?
             command = commandWords.shift.downcase
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
