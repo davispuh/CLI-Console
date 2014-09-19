@@ -269,7 +269,7 @@ module CLI
         # @param formatValues [Array]
         # @return [Fixnum]
         def start(formatString, formatValues)
-            indent_level = @IO.indent_level
+            # indent_level = @IO.indent_level
             loop do
                 begin
                     currentValues = []
@@ -281,13 +281,13 @@ module CLI
                         end
                     end
                     command = getCommand( formatString % currentValues )
-                    @IO.indent_level += 1
+                    # @IO.indent_level += 1
                     result = processCommand(command)
-                    @IO.indent_level -= 1
+                    # @IO.indent_level -= 1
                     return 0 if result == @ExitCode
                 rescue CommandNotFoundError => e
                     showException(e)
-                @IO.indent_level = indent_level
+                # @IO.indent_level = indent_level
                 end
             end
             -1

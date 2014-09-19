@@ -16,6 +16,10 @@ class ShellUI
         end
     end
 
+    def derp
+      raise DerpError "ONOEZ"
+    end
+
     usage 'Usage: pwd'
     desc 'Display current directory'
 
@@ -36,11 +40,23 @@ shell = ShellUI.new
 console = CLI::Console.new(io)
 
 console.addCommand('ls', shell.method(:ls), 'List files')
+console.addCommand('derp', shell.method(:derp))
 console.addCommand('pwd', shell.method(:pwd), 'Current directory')
 console.addCommand('cd', shell.method(:cd), 'Change directory')
 console.addHelpCommand('help', 'Help')
 console.addExitCommand('exit', 'Exit from program')
 console.addAlias('quit', 'exit')
 
+begin
 console.start("%s> ",[Dir.method(:pwd)])
+rescue Interrupt
+  puts "^C"
+  retry
+rescue DerpError
+  puts "herp"
+  retry
+ensure
+  shutdown
+  exit 0
+end
 
