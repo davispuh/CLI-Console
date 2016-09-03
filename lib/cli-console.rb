@@ -4,6 +4,9 @@ require 'cli-console/task'
 
 # Command-line interface module
 module CLI
+
+    class CommandNotFoundError < RuntimeError; end
+
     # Console class
     #
     # ```ruby
@@ -12,6 +15,7 @@ module CLI
     # ```
     class Console
         def initialize(io)
+            @DefaultCommand = nil
             @Commands = {}
             @Aliases = {}
             @IO = io
@@ -29,7 +33,7 @@ module CLI
         # displays backtrace if @Backtrace
         # @param exception [Exception] exception to display
         def showException(exception)
-            @IO.say "Exception: #{exception.message.strip}"
+            @IO.say "#{exception.class}: #{exception.message.strip}"
             if @Backtrace
                 @IO.say 'Backtrace:'
                 @IO.indent do |io|
@@ -59,6 +63,24 @@ module CLI
             commandLongDescription = command.owner.get_description(command.name) if commandLongDescription == nil
             commandUsage = command.owner.get_usage(command.name) if commandUsage == nil
             @Commands[commandName] = [command, commandDescription, commandLongDescription, commandUsage]
+        end
+
+        # Sets an existing command as the default
+        # @param commandName [String] name of command
+        # @return nil
+        def addDefaultCommand(commandName)
+            command = commandName.downcase
+            if (not @Commands.key?(command) and not @Aliases.key?(command))
+                matches = commandMatch(command)
+                if matches.length == 1
+                    @DefaultCommand = command.to_s
+                else
+                    raise ArgumentError, "Error: #{commandName} is not a valid command to default to."
+                end
+            else
+                @DefaultCommand = command.to_s
+            end
+            return nil
         end
 
         # Adds name for exit command
@@ -132,13 +154,51 @@ module CLI
             end
         end
 
-        # Parses commandString into Array of words
-        # @param commandString [String]
-        # @return [Array] command words
         def self.parseCommandString(commandString)
-            commandWords = []
-            return commandWords unless commandString
+            idx = 0;
+            tokens = []
+            currentToken = []
+            escapeNext = false
+            inString = nil
+            stringQuote = nil
+            while idx < commandString.length
+                currentChar = commandString[idx]
+                if escapeNext
+                    escapeNext = false
+                    currentToken << commandString[idx]
+                    idx += 1
+                    next
+                end
+                if (currentChar == '"' or currentChar == "\'") and not escapeNext
+                    stringQuote = currentChar == '"' ? '"' : "'" unless inString
+                    inString = (not inString) if currentChar == stringQuote or (not inString)
+                end
+                if currentChar == "\\"
+                    escapeNext = true
+                    idx += 1
+                    next
+                end
+                if currentChar == ' ' and not inString
+                    tokens << currentToken.join("")
+                    currentToken = []
+                    idx += 1
+                    next
+                end
+                currentToken << currentChar
+                idx += 1
+            end
+            # Catch any stragglers.
+            unless currentToken.empty?
+                tokens << currentToken.join("")
+                currentToken = []
+            end
+            tokens
+        end
 
+        # Parses all the escape sequences in token
+        # @param token [String]
+        # @return [String] escapedToken
+        def self.replaceEscapes(token)
             pattern = %r{
                 (?<command> [^\s"']+ ){0}
                 (?<exceptDoubleQuotes> [^"\\]*(?:\\.[^"\\]*)* ){0}
@@ -146,49 +206,59 @@ module CLI
                 \g<command>|"\g<exceptDoubleQuotes>"|'\g<exceptSingleQuotes>'
             }x
 
-            commandString.scan(pattern) do |m|
-                commandWords << m[0] unless m[0].nil?
-                commandWords << m[1].gsub('\"','"') unless m[1].nil?
-                commandWords << m[2].gsub('\\\'','\'') unless m[2].nil?
+            token.scan(pattern) do |m|
+                return m[0] unless m[0].nil?
+                return m[1].gsub('\"','"') unless m[1].nil?
+                return m[2].gsub('\\\'','\'') unless m[2].nil?
             end
-            commandWords
         end
+
+        # def self.parseCommandString(commandString)
+        #     return commandString.split(" ").map { |e| replaceEscapes(e) }
+        # end
 
         # Executes command with parameters
         # @param commandString [String]
         # @return command result or error number
         def processCommand(commandString)
             return 0 if commandString.to_s.empty?
-            commandWords = Console::parseCommandString(commandString)
+            commandWords = Console::parseCommandString(commandString) unless commandString.nil?
             command = commandWords.shift.downcase
             if (not @Commands.key?(command) and not @Aliases.key?(command))
                 matches = commandMatch(command)
                 if matches.length == 1
-                    if matches[0][1][0].class == String
-                        oldCommandWords = [matches[0][1][0]]
-                    commandWords = @Aliases[matches[0][0]][0].split
-                    command = commandWords.shift.downcase
-                    commandWords += oldCommandWords
+                    match = matches[0]
+                    if match[1][0].class == String
+                        oldCommandWords = [match[1][0]]
+                        commandWords = @Aliases[match[0]][0].split
+                        command = commandWords.shift.downcase
+                        commandWords += oldCommandWords
                     else
-                    command = matches[0][0]
+                        command = match[0]
                     end
                 elsif matches.length > 0
                     @IO.say('Ambiguous command.')
                     showMatches(matches)
-                return -3
+                    return -3
                 else
-                    @IO.say("Command \"#{command}\" not recognized.")
-                return -2
+                    if @DefaultCommand
+                        return processCommand "#{@DefaultCommand} #{commandString}"
+                    else
+                        @IO.say("Command \"#{command}\" not recognized.")
+                        return -2
+                    end
                 end
             elsif @Aliases.key?(command)
-            oldCommandWords = commandWords
-            commandWords = @Aliases[command][0].split
-            command = commandWords.shift.downcase
-            commandWords += oldCommandWords
+                oldCommandWords = commandWords
+                commandWords = @Aliases[command][0].split
+                command = commandWords.shift.downcase
+                commandWords += oldCommandWords
             end
             begin
                 return @Commands[command][0].call(commandWords)
-            rescue Exception => e
+            rescue Interrupt => e
+                @IO.say "\n Interrupted."
+            rescue CommandNotFoundError => e
                 showException(e)
             end
             return -1
@@ -199,7 +269,7 @@ module CLI
         # @param formatValues [Array]
         # @return [Fixnum]
         def start(formatString, formatValues)
-            indent_level = @IO.indent_level
+            # indent_level = @IO.indent_level
             loop do
                 begin
                     currentValues = []
@@ -211,13 +281,13 @@ module CLI
                         end
                     end
                     command = getCommand( formatString % currentValues )
-                    @IO.indent_level += 1
+                    # @IO.indent_level += 1
                     result = processCommand(command)
-                    @IO.indent_level -= 1
+                    # @IO.indent_level -= 1
                     return 0 if result == @ExitCode
-                rescue Exception => e
+                rescue CommandNotFoundError => e
                     showException(e)
-                @IO.indent_level = indent_level
+                # @IO.indent_level = indent_level
                 end
             end
             -1

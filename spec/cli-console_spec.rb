@@ -10,7 +10,7 @@ class UI
     usage 'Usage: try'
     desc 'try exception'
     def try(params)
-        raise Exception, params[0]
+        raise CLI::CommandNotFoundError, params[0]
     end
 end
 
@@ -36,29 +36,29 @@ describe CLI::Console do
         end
 
         it 'should parse command with double quotes' do
-            CLI::Console::parseCommandString('command "param1 extra" param2').should eq(['command', 'param1 extra', 'param2'])
-            CLI::Console::parseCommandString('command "param1" "param2 extra"').should eq(['command', 'param1', 'param2 extra'])
+            CLI::Console::parseCommandString('command "param1 extra" param2').should eq(['command', '"param1 extra"', 'param2'])
+            CLI::Console::parseCommandString('command "param1" "param2 extra"').should eq(['command', '"param1"', '"param2 extra"'])
         end
 
         it 'should parse command with single quotes' do
-            CLI::Console::parseCommandString('command \'param1 extra\' param2').should eq(['command', 'param1 extra', 'param2'])
-            CLI::Console::parseCommandString('command \'param1\' \'param2 extra\'').should eq(['command', 'param1', 'param2 extra'])
+            CLI::Console::parseCommandString('command \'param1 extra\' param2').should eq(['command', '\'param1 extra\'', 'param2'])
+            CLI::Console::parseCommandString('command \'param1\' \'param2 extra\'').should eq(['command', '\'param1\'', '\'param2 extra\''])
         end
 
         it 'should parse command with mixed quotes' do
-            CLI::Console::parseCommandString('command "param1 \'extra double\'" param2').should eq(['command', 'param1 \'extra double\'', 'param2'])
-            CLI::Console::parseCommandString('command "param1" "param2 \'double extra\'"').should eq(['command', 'param1', 'param2 \'double extra\''])
-            CLI::Console::parseCommandString('command \'param1 "extra double"\' param2').should eq(['command', 'param1 "extra double"', 'param2'])
-            CLI::Console::parseCommandString('command \'param1\' \'param2 "double extra"\'').should eq(['command', 'param1', 'param2 "double extra"'])
+            CLI::Console::parseCommandString('command "param1 \'extra double\'" param2').should eq(['command', '"param1 \'extra double\'"', 'param2'])
+            CLI::Console::parseCommandString('command "param1" "param2 \'double extra\'"').should eq(['command', '"param1"', '"param2 \'double extra\'"'])
+            CLI::Console::parseCommandString('command \'param1 "extra double"\' param2').should eq(['command', '\'param1 "extra double"\'', 'param2'])
+            CLI::Console::parseCommandString('command \'param1\' \'param2 "double extra"\'').should eq(['command', '\'param1\'', '\'param2 "double extra"\''])
         end
 
         it 'should parse command with escaped quotes' do
-            CLI::Console::parseCommandString('command "param with \" quote"').should eq(['command', 'param with " quote'])
-            CLI::Console::parseCommandString('command \'param with \\\' quote\'').should eq(['command', 'param with \' quote'])
+            CLI::Console::parseCommandString('command "param with \" quote"').should eq(['command', '"param with " quote"'])
+            CLI::Console::parseCommandString('command \'param with \\\' quote\'').should eq(['command', '\'param with \' quote\''])
         end
 
         it 'should parse command with escaped quotes in quotes' do
-            CLI::Console::parseCommandString('command "param1 \'extra \"double double\"\'" param2').should eq(['command', 'param1 \'extra "double double"\'', 'param2'])
+            CLI::Console::parseCommandString('command "param1 \'extra \"double double\"\'" param2').should eq(['command', '"param1 \'extra "double double"\'"', 'param2'])
         end
 
     end
@@ -152,7 +152,7 @@ describe CLI::Console do
             input.rewind
             init
             console.start('%s> ',[method(:left)]).should eq(0)
-            out = 'left>    Exception: lol
+            out = 'left>    CLI::CommandNotFoundError: lol
 left>    Command "not" not recognized.
 left> '
 
